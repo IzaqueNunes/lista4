@@ -38,8 +38,9 @@ Projection::Projection(const TNFTask &task, const Pattern &pattern)
       Project initial state and goal state, and set
       projected_task.initial_state and projected_task.goal_state.
     */
-
-    // TODO: add your code for exercise (a) here.
+        
+    projected_task.initial_state = project_state(task.initial_state);
+    projected_task.goal_state = project_state(task.goal_state);
 
     /*
       Project operators and create the projected operators in
@@ -47,7 +48,37 @@ Projection::Projection(const TNFTask &task, const Pattern &pattern)
       projection.
     */
 
-    // TODO: add your code for exercise (a) here.
+    // Criando operadores
+    for (const auto &op : task.operators) {
+        TNFOperator projected_op;
+        projected_op.cost = op.cost;
+        projected_op.name = op.name;
+        
+        bool has_effect = false;
+
+        // Criando pré-condições
+        for (const auto &entry : op.entries) {
+            int projected_var = variable_mapping[entry.variable_id];
+            if (projected_var != -1) {
+            	TNFOperatorEntry projected_entry(
+				projected_var,
+				entry.precondition_value,
+				entry.effect_value
+				);
+				
+				projected_op.entries.push_back(projected_entry);
+				
+				if(entry.precondition_value != entry.effect_value){
+					has_effect = true;
+				}
+            }
+        }
+
+        // Adicionando o operador apenas se ele tiver efeito
+        if (has_effect) {
+            projected_task.operators.push_back(projected_op);
+        }
+    }
 }
 
 TNFState Projection::project_state(const TNFState &original_state) const {
