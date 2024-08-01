@@ -44,7 +44,47 @@ PatternDatabase::PatternDatabase(const TNFTask &task, const Pattern &pattern)
     */
     queue.push({0, projection.rank_state(projected_task.goal_state)});
 
-    // TODO: add your code for exercise (b) here.
+    while (!queue.empty()) {
+        int current_distance = queue.top().first;
+        int current_state_index = queue.top().second;
+        queue.pop();
+
+        TNFState current_state = projection.unrank_state(current_state_index);
+
+        if (current_distance > distances[current_state_index]) {
+            continue;
+        }
+
+        for (const TNFOperator &op : projected_task.operators) {
+            bool applicable = true;
+            TNFState predecessor_state = current_state;
+
+            for (const auto &entry : op.entries) {
+                int var = entry.variable_id;
+                int effect_value = entry.effect_value;
+                if (predecessor_state[var] != effect_value) {
+                    applicable = false;
+                    break;
+                }
+            }
+
+            if (applicable) {
+                for (const auto &entry : op.entries) {
+                    int var = entry.variable_id;
+                    int precondition_value = entry.precondition_value;
+                    predecessor_state[var] = precondition_value;
+                }
+
+                int predecessor_index = projection.rank_state(predecessor_state);
+                int new_distance = current_distance + op.cost;
+
+                if (new_distance < distances[predecessor_index]) {
+                    distances[predecessor_index] = new_distance;
+                    queue.push({new_distance, predecessor_index});
+                }
+            }
+        }
+    }
 }
 
 int PatternDatabase::lookup_distance(const TNFState &original_state) const {
