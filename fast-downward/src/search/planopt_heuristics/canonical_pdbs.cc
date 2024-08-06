@@ -29,18 +29,19 @@ vector<vector<int>> build_compatibility_graph(const vector<Pattern> &patterns, c
 
     vector<vector<int>> graph(patterns.size());
 
-    for (int i = 0; i < patterns.size(); ++i) {
-        for (int j = i + 1; j < patterns.size(); ++j) {
-            bool compatible = true;
+    // TODO: add your code for exercise (d) here.
+    for (size_t i = 0; i < patterns.size(); ++i) {
+        for (size_t j = i + 1; j < patterns.size(); ++j) {
+            bool are_additive = true;
             
-            //verificando se os patterns i e j são aditivos
             for (const TNFOperator &op : task.operators) {
                 if (affects_pattern(op, patterns[i]) && affects_pattern(op, patterns[j])) {
-                    compatible = false;
+                    are_additive = false;
                     break;
                 }
             }
-            if (compatible) {
+            
+            if (are_additive) {
                 graph[i].push_back(j);
                 graph[j].push_back(i);
             }
@@ -87,7 +88,8 @@ int CanonicalPatternDatabases::compute_heuristic(const TNFState &original_state)
          of the canonical heuristic.
        */
        int h = 0;
-
+	
+	// TODO: add your code for exercise (d) here.
        for (const vector<int> &clique : maximal_additive_sets) {
 	        int clique_h = 0;
 	        for (int i : clique) {
