@@ -32,14 +32,10 @@ vector<vector<int>> build_compatibility_graph(const vector<Pattern> &patterns, c
     // TODO: add your code for exercise (d) here.
     for (size_t i = 0; i < patterns.size(); ++i) {
         for (size_t j = i + 1; j < patterns.size(); ++j) {
-            bool are_additive = true;
-            
-            for (const TNFOperator &op : task.operators) {
-                if (affects_pattern(op, patterns[i]) && affects_pattern(op, patterns[j])) {
-                    are_additive = false;
-                    break;
-                }
-            }
+            bool are_additive = std::all_of(task.operators.begin(), task.operators.end(),
+                [&](const auto& op) {
+                    return !(affects_pattern(op, patterns[i]) && affects_pattern(op, patterns[j]));
+                });
             
             if (are_additive) {
                 graph[i].push_back(j);
@@ -90,13 +86,17 @@ int CanonicalPatternDatabases::compute_heuristic(const TNFState &original_state)
        int h = 0;
 	
 	// TODO: add your code for exercise (d) here.
-       for (const vector<int> &clique : maximal_additive_sets) {
-	        int clique_h = 0;
-	        for (int i : clique) {
-	            clique_h += heuristic_values[i];
-	        }
-        	h = max(h, clique_h);
-    	}
+       for (const auto& clique : maximal_additive_sets) {
+        int clique_sum = 0;
+        for (int pdb_index : clique) {
+            if (clique_sum > numeric_limits<int>::max() - heuristic_values[pdb_index]) {
+                clique_sum = numeric_limits<int>::max();
+                break;
+            }
+            clique_sum += heuristic_values[pdb_index];
+        }
+            h = max(h, clique_sum);
+        }
 
        return h;
 }
