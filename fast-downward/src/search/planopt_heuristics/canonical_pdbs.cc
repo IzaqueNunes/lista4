@@ -2,7 +2,6 @@
 
 #include "../algorithms/max_cliques.h"
 #include <limits> 
-#include <vector>
 
 using namespace std;
 
@@ -20,22 +19,33 @@ bool affects_pattern(const TNFOperator &op, const Pattern &pattern) {
 }
 
 vector<vector<int>> build_compatibility_graph(const vector<Pattern> &patterns, const TNFTask &task) {
+    /*
+      Build the compatibility graph of the given pattern collection in the form
+      of adjacency lists: the outer vector has one entry for each pattern
+      representing the vertices of the graph. Each such entry is a vector of
+      ints that represents the outgoing edges of that vertex, i.e., an edge
+      to each other vertex that represents an additive pattern.
+    */
+
     vector<vector<int>> graph(patterns.size());
 
+    // TODO: add your code for exercise (d) here.
+    
     for (size_t i = 0; i < patterns.size(); ++i) {
-        for (size_t j = i + 1; j < patterns.size(); ++j) {
-            bool are_additive = true;
-            
-            for (const TNFOperator &op : task.operators) {
-                if (affects_pattern(op, patterns[i]) && affects_pattern(op, patterns[j])) {
-                    are_additive = false;
-                    break;
+        for (size_t j = 0; j < patterns.size(); ++j) {
+            if (i != j) {
+                bool are_additive = true;
+                
+                for (const auto &op : task.operators) {
+                    if (affects_pattern(op, patterns[i]) && affects_pattern(op, patterns[j])) {
+                        are_additive = false;
+                        break;
+                    }
                 }
-            }
-            
-            if (are_additive) {
-                graph[i].push_back(j);
-                graph[j].push_back(i);
+                
+                if (are_additive) {
+                    graph[i].push_back(j);
+                }
             }
         }
     }
@@ -51,27 +61,49 @@ CanonicalPatternDatabases::CanonicalPatternDatabases(
 
     vector<vector<int>> compatibility_graph = build_compatibility_graph(patterns, task);
     max_cliques::compute_max_cliques(compatibility_graph, maximal_additive_sets);
+
 }
 
 int CanonicalPatternDatabases::compute_heuristic(const TNFState &original_state) {
-    vector<int> heuristic_values;
-    heuristic_values.reserve(pdbs.size());
-    for (const PatternDatabase &pdb : pdbs) {
-        heuristic_values.push_back(pdb.lookup_distance(original_state));
-        if (heuristic_values.back() == numeric_limits<int>::max()) {
-            return numeric_limits<int>::max();
-        }
-    }
+    /*
+         To avoid the overhead of looking up the heuristic value of a PDB multiple
+         times (if that PDB occurs in multiple cliques), we pre-compute all
+         heuristic values. Use heuristic_values[i] for the heuristic value of
+         pdbs[i] in your code below.
+       */
+       vector<int> heuristic_values;
+       heuristic_values.reserve(pdbs.size());
+       for (const PatternDatabase &pdb : pdbs) {
+           heuristic_values.push_back(pdb.lookup_distance(original_state));
+           /*
+             special case: if one of the PDBs detects unsolvability, we can
+             return infinity right away. Otherwise, we would have to deal with
+             integer overflows when adding numbers below.
+           */
+           if (heuristic_values.back() == numeric_limits<int>::max()) {
+               return numeric_limits<int>::max();
+           }
+       }
 
-    int h = 0;
-    for (const vector<int> &clique : maximal_additive_sets) {
-        int clique_sum = 0;
-        for (int pdb_index : clique) {
-            clique_sum += heuristic_values[pdb_index];
-        }
-        h = max(h, clique_sum);
-    }
+       /*
+         Use maximal_additive_sets and heuristic_values to compute the value
+         of the canonical heuristic.
+       */
+       int h = 0;
 
-    return h;
+       // TODO: add your code for exercise (d) here.
+       
+       for (const auto& clique : maximal_additive_sets) {
+    		int clique_sum = 0;
+        	for (int pdb_index : clique) {
+            	if (clique_sum > numeric_limits<int>::max() - heuristic_values[pdb_index]) {
+                	clique_sum = numeric_limits<int>::max();
+                break;
+            	}	
+            	clique_sum += heuristic_values[pdb_index];
+        	}
+        	h = max(h, clique_sum);
+    	}
+       return h;
 }
 }
