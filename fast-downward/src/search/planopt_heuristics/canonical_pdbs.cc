@@ -94,12 +94,8 @@ int CanonicalPatternDatabases::compute_heuristic(const TNFState &original_state)
        // TODO: add your code for exercise (d) here.
        
        for (const auto& clique : maximal_additive_sets) {
-    		int clique_sum = 0;
+        	int clique_sum = 0;
         	for (int pdb_index : clique) {
-            	if (clique_sum > numeric_limits<int>::max() - heuristic_values[pdb_index]) {
-                	clique_sum = numeric_limits<int>::max();
-                break;
-            	}	
             	clique_sum += heuristic_values[pdb_index];
         	}
         	h = max(h, clique_sum);
