@@ -33,19 +33,19 @@ vector<vector<int>> build_compatibility_graph(const vector<Pattern> &patterns, c
     
     for (size_t i = 0; i < patterns.size(); ++i) {
         for (size_t j = 0; j < patterns.size(); ++j) {
-            if (i != j) {
-                bool are_additive = true;
-                
-                for (const auto &op : task.operators) {
-                    if (affects_pattern(op, patterns[i]) && affects_pattern(op, patterns[j])) {
-                        are_additive = false;
-                        break;
-                    }
+            if (i == j) continue;  // Skip self-comparison
+            
+            bool are_additive = true;
+            
+            for (const auto &op : task.operators) {
+                if (affects_pattern(op, patterns[i]) && affects_pattern(op, patterns[j])) {
+                    are_additive = false;
+                    break;
                 }
-                
-                if (are_additive) {
-                    graph[i].push_back(j);
-                }
+            }
+            
+            if (are_additive) {
+                graph[i].push_back(j);
             }
         }
     }
