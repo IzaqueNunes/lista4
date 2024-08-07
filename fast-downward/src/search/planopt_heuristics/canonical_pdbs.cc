@@ -31,21 +31,19 @@ vector<vector<int>> build_compatibility_graph(const vector<Pattern> &patterns, c
 
     // TODO: add your code for exercise (d) here.
     
+    // Iterar sobre todas as combinações de padrões
     for (size_t i = 0; i < patterns.size(); ++i) {
-        for (size_t j = 0; j < patterns.size(); ++j) {
-            if (i == j) continue;  // Skip self-comparison
-            
-            bool are_additive = true;
-            
-            for (const auto &op : task.operators) {
+        for (size_t j = i + 1; j < patterns.size(); ++j) {
+            bool compatible = true;
+            for (const TNFOperator &op : task.operators) {
                 if (affects_pattern(op, patterns[i]) && affects_pattern(op, patterns[j])) {
-                    are_additive = false;
+                    compatible = false;
                     break;
                 }
             }
-            
-            if (are_additive) {
+            if (compatible) {
                 graph[i].push_back(j);
+                graph[j].push_back(i);
             }
         }
     }
@@ -93,12 +91,15 @@ int CanonicalPatternDatabases::compute_heuristic(const TNFState &original_state)
 
        // TODO: add your code for exercise (d) here.
        
-       for (const auto& clique : maximal_additive_sets) {
-        	int clique_sum = 0;
-        	for (int pdb_index : clique) {
-            	clique_sum += heuristic_values[pdb_index];
-        	}
-        	h = max(h, clique_sum);
+       for (const auto &clique : maximal_additive_sets) {
+	        int clique_sum = 0;
+	        for (int pdb_index : clique) {
+	            clique_sum += heuristic_values[pdb_index];
+	            if (clique_sum < 0) { // Verificação de overflow
+	                return numeric_limits<int>::max();
+	            }
+	        }
+	        h = max(h, clique_sum);
     	}
        return h;
 }
