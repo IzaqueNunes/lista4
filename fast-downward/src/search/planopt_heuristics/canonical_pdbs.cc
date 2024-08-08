@@ -31,22 +31,22 @@ vector<vector<int>> build_compatibility_graph(const vector<Pattern> &patterns, c
 
     // TODO: add your code for exercise (d) here.
     
-    // Criar um vetor que armazena quais operadores afetam cada padrão
-    vector<vector<const TNFOperator*>> affected_operators(patterns.size());
+    vector<unordered_set<int>> affected_by_operator(patterns.size());
+    // Precompute which operators affect which patterns
     for (size_t i = 0; i < patterns.size(); ++i) {
-        for (const TNFOperator &op : task.operators) {
-            if (affects_pattern(op, patterns[i])) {
-                affected_operators[i].push_back(&op);
+        for (size_t op_index = 0; op_index < task.operators.size(); ++op_index) {
+            if (affects_pattern(task.operators[op_index], patterns[i])) {
+                affected_by_operator[i].insert(op_index);
             }
         }
     }
-    
-    // Iterar sobre todas as combinações de padrões e verificar a compatibilidade
+
+    // Iterate over all combinations of patterns
     for (size_t i = 0; i < patterns.size(); ++i) {
         for (size_t j = i + 1; j < patterns.size(); ++j) {
             bool compatible = true;
-            for (const TNFOperator* op : affected_operators[i]) {
-                if (affects_pattern(*op, patterns[j])) {
+            for (int op_index : affected_by_operator[i]) {
+                if (affected_by_operator[j].count(op_index)) {
                     compatible = false;
                     break;
                 }
@@ -105,7 +105,7 @@ int CanonicalPatternDatabases::compute_heuristic(const TNFState &original_state)
 	        int clique_sum = 0;
 	        for (int pdb_index : clique) {
 	            clique_sum += heuristic_values[pdb_index];
-	            if (clique_sum > numeric_limits<int>::max()) { // Verificação de overflow
+	            if (clique_sum < 0) { // Verificação de overflow
 	                return numeric_limits<int>::max();
 	            }
 	        }
