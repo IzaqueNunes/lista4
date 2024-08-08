@@ -31,12 +31,22 @@ vector<vector<int>> build_compatibility_graph(const vector<Pattern> &patterns, c
 
     // TODO: add your code for exercise (d) here.
     
-    // Iterar sobre todas as combinações de padrões
+    // Criar um vetor que armazena quais operadores afetam cada padrão
+    vector<vector<const TNFOperator*>> affected_operators(patterns.size());
+    for (size_t i = 0; i < patterns.size(); ++i) {
+        for (const TNFOperator &op : task.operators) {
+            if (affects_pattern(op, patterns[i])) {
+                affected_operators[i].push_back(&op);
+            }
+        }
+    }
+    
+    // Iterar sobre todas as combinações de padrões e verificar a compatibilidade
     for (size_t i = 0; i < patterns.size(); ++i) {
         for (size_t j = i + 1; j < patterns.size(); ++j) {
             bool compatible = true;
-            for (const TNFOperator &op : task.operators) {
-                if (affects_pattern(op, patterns[i]) && affects_pattern(op, patterns[j])) {
+            for (const TNFOperator* op : affected_operators[i]) {
+                if (affects_pattern(*op, patterns[j])) {
                     compatible = false;
                     break;
                 }
