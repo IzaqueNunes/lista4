@@ -33,7 +33,7 @@ vector<vector<int>> build_compatibility_graph(const vector<Pattern> &patterns, c
     
     // Iterar sobre todas as combinações de padrões
     for (size_t i = 0; i < patterns.size(); ++i) {
-        for (size_t j = i + 2; j < patterns.size(); ++j) {
+        for (size_t j = i + 1; j < patterns.size(); ++j) {
             bool compatible = true;
             for (const TNFOperator &op : task.operators) {
                 if (affects_pattern(op, patterns[i]) && affects_pattern(op, patterns[j])) {
