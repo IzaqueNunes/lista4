@@ -97,6 +97,8 @@ int CanonicalPatternDatabases::compute_heuristic(const TNFState &original_state)
             h = h_clique;
         }
     }
+
     return h;
 }
+
 }
