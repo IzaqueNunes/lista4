@@ -18,6 +18,17 @@ bool affects_pattern(const TNFOperator &op, const Pattern &pattern) {
     return false;
 }
 
+bool share_variables(const Pattern &pattern1, const Pattern &pattern2) {
+    for (int var1 : pattern1) {
+        for (int var2 : pattern2) {
+            if (var1 == var2) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 vector<vector<int>> build_compatibility_graph(const vector<Pattern> &patterns, const TNFTask &task) {
     /*
       Build the compatibility graph of the given pattern collection in the form
@@ -31,22 +42,16 @@ vector<vector<int>> build_compatibility_graph(const vector<Pattern> &patterns, c
 
     // TODO: add your code for exercise (d) here.
     
-    vector<unordered_set<int>> affected_by_operator(patterns.size());
-    // Precompute which operators affect which patterns
-    for (size_t i = 0; i < patterns.size(); ++i) {
-        for (size_t op_index = 0; op_index < task.operators.size(); ++op_index) {
-            if (affects_pattern(task.operators[op_index], patterns[i])) {
-                affected_by_operator[i].insert(op_index);
-            }
-        }
-    }
-
-    // Iterate over all combinations of patterns
     for (size_t i = 0; i < patterns.size(); ++i) {
         for (size_t j = i + 1; j < patterns.size(); ++j) {
+            // Primeiro, verifique se os padrões compartilham variáveis
+            if (!share_variables(patterns[i], patterns[j])) {
+                continue;
+            }
+
             bool compatible = true;
-            for (int op_index : affected_by_operator[i]) {
-                if (affected_by_operator[j].count(op_index)) {
+            for (const TNFOperator &op : task.operators) {
+                if (affects_pattern(op, patterns[i]) && affects_pattern(op, patterns[j])) {
                     compatible = false;
                     break;
                 }
@@ -104,12 +109,14 @@ int CanonicalPatternDatabases::compute_heuristic(const TNFState &original_state)
        for (const auto &clique : maximal_additive_sets) {
 	        int clique_sum = 0;
 	        for (int pdb_index : clique) {
-	            clique_sum += heuristic_values[pdb_index];
-	            if (clique_sum < 0) { // Verificação de overflow
+	            int heuristic_value = heuristic_values[pdb_index];
+	            // Verificação de overflow de soma
+	            if (clique_sum > numeric_limits<int>::max() - heuristic_value) {
 	                return numeric_limits<int>::max();
 	            }
+	            clique_sum += heuristic_value;
 	        }
-	        h = max(h, clique_sum);
+        	h = max(h, clique_sum);
     	}
        return h;
 }
